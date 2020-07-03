@@ -1,0 +1,63 @@
+﻿@page "/country"
+@inject IHttpClientFactory ClientFactory
+
+
+<div class="col-sm-10 row">
+    <label class="col-sm-4 font-weight-bold" for="city">Country: </label>
+    <select class="form-control-sm col-sm-4" @onchange="@CountryClicked" required>
+        <option value="">-- Select Country --</option>
+        @foreach (var country in countryList)
+        {
+            <option value="@country.Code">@country.Description</option>
+        }
+    </select>
+</div>
+<br />
+<div class="col-sm-10 row">
+    <label class="col-sm-4 font-weight-bold" for="city">City: </label>
+    <select class="form-control-sm col-sm-4" @onchange="@CityClicked" required>
+        <option value="">-- Select City --</option>
+        @if (cityList != null)
+        {
+            @foreach (var city in cityList)
+            {
+                <option value="@city.Description">@city.Description</option>
+            }
+        }
+    </select>
+</div>
+
+@code {
+    [Parameter]
+    public Developer Developer { get; set; }
+    List<CountryViewModel> countryList = new List<CountryViewModel>();
+    List<City> cityList = new List<City>();
+    public string countryName { get; set; }
+    public string countryCode { get; set; }
+    public string cityName { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var http = ClientFactory
+        countryList = await http.GetJsonAsync<List<CountryViewModel>>($"{baseUrl}api/Country");
+    }
+
+    protected async void CountryClicked(ChangeEventArgs countryEvent)
+    {
+        var baseUrl = @"http://localhost:100/";
+        cityList.Clear();
+        cityName = string.Empty;
+        countryCode = countryEvent.Value.ToString();
+        countryName = countryList.FirstOrDefault(s => s.Code == countryCode).Description;
+        cityList = await http.GetJsonAsync<List<City>>($"{baseUrl}api/City/GetAllCityByCountryCode/{countryCode}");
+        //Developer.Country = countryName;
+        this.StateHasChanged();
+    }
+    void CityClicked(ChangeEventArgs cityEvent)
+    {
+        cityName = cityEvent.Value.ToString();
+        //Developer.City = cityName;
+        this.StateHasChanged();
+    }
+
+}

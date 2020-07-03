@@ -1,0 +1,89 @@
+﻿@page "/developers"
+@page "/"
+@inject IDeveloperService DeveloperService
+@inject IHttpClientFactory ClientFactory 
+@using Newtonsoft.Json
+@*@inject NavigationManager NavigationManager*@
+
+<div class="jumbotron jumbotron bg-cover col-12">
+    <div class="overlay">
+        <div class="container">
+            <h2 class="display-3 mb-1" style="text-align: center;color: white">Developer Hub</h2>
+            <p class="lead" style="text-align: center;color:white">
+                The developer's community today.
+                <br />
+                Connect. Build. Grow.
+                <br />
+                <NavLink href="/developers/create/ndjoin">
+                    <a class="oi oi-thumb-up" style="text-decoration-line:underline;color:dodgerblue">Join us.</a>
+                </NavLink>
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    @*<h1 style="text-align:center">Developer Hub</h1>*@
+    @if (developerList == null)
+    {
+        <center><text>Loading...</text></center>
+    }
+    else if (developerList.Count == 0)
+    {
+        <center><text>No records in database.</text></center>
+    }
+    else
+    {
+        <div class="card-deck">
+            @foreach (Developer developer in developerList)
+            {
+                <div class="card" style="width:80px">
+                    <img class="card-img-top" src="/img/icons8-user-male-240.png" alt="Card image" style="width: 50%;display: block;margin-left: auto;margin-right: auto;background-size:cover">
+                    <div class="card-body" style="text-align:center">
+                        
+                        <h4 class="card-title">@developer.FirstName @developer.LastName.</h4>
+                        <p class="card-text">@developer.Description</p>
+                                               
+                        <i href="#" class="fa fa-twitter"></i>
+                        <i href="#" class="fa fa-linkedin"></i>
+                        <i href="#" class="fa fa-facebook"></i>
+                    </div>
+                    <div class="card-footer">                      
+                        <a class="btn btn-info" href="/developers/developerdetail/@developer.DeveloperId">
+                            View Profile
+                        </a>                       
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    <hr />
+    <div class="col-12 row">@DeveloperService.GetCreationDate()</div>
+    <div class="col-12 row">version: @DeveloperService.GetVersion()</div>
+</div>
+
+@code {
+
+    //Developer[] DeveloperList { get; set; }
+    private List<DeveloperViewModel> developerList = new List<DeveloperViewModel>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDevelopers();
+    }
+
+    public async Task LoadDevelopers()
+    {
+        var http = ClientFactory.CreateClient("dev");
+        developerList = await http.GetJsonAsync<List<DeveloperViewModel>>("api/Developer/GetAllDeveloper");
+
+        //var baseUrl = @"http://localhost:65152/";
+        //var resp = await http.GetStringAsync($"{baseUrl}api/Developer");
+        //developerList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Developer>>(resp);
+
+        //HttpRequestMessage httpRequest = new HttpRequestMessage();
+        //httpRequest.Method = new HttpMethod("GET");
+        //httpRequest.RequestUri = new Uri("http://localhost:65152/api/developer");
+        //httpRequest.Content
+    }
+}

@@ -1,0 +1,39 @@
+﻿@page "/developers/edit/{developerId}"
+@inject IDeveloperService DeveloperService
+@inject IJSRuntime JSRuntime
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager NavigationManager
+
+<div class="container col-12">
+    <h3><b>Edit Developer</b></h3>
+    <hr />
+
+    @*<ServerValidation IsVisible="IsVisible" Results="Results">
+            @RecordName
+        </ServerValidation>*@
+
+    <DeveloperForm Developer="@editDeveloper" OnValidSubmit="@Edit" />
+</div>
+<hr />
+<div class="col-sm-10 row">@DeveloperService.GetCreationDate()</div>
+<div class="col-sm-10 row">version: @DeveloperService.GetVersion()</div>
+
+@code {
+    [Parameter]
+    public string developerId { get; set; }
+    DeveloperViewModel editDeveloper = new DeveloperViewModel();
+    string baseUrl = @"http://localhost:65152/";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var http = ClientFactory.CreateClient("dev");
+        Developer developer = await http.GetJsonAsync<Developer>($"api/GetSingleDeveloper/{developerId}");
+        editDeveloper = developer;
+    }
+
+    private async Task Edit()
+    {
+        var http = ClientFactory.CreateClient("dev");
+        await http.PutAsJsonAsync<Developer>("api/Developer/UpdateDeveloper", editDeveloper);
+    }
+}

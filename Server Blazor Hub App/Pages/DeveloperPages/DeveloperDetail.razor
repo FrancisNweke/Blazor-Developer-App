@@ -1,0 +1,106 @@
+﻿@page "/developers/developerdetail/{developerId}"
+@*@page "/developers/developerdetail"*@
+@inject IDeveloperService DeveloperService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject IHttpClientFactory ClientFactory
+
+<div class="col-sm-12">
+    <table class="table table-responsive table-hover"> 
+        <thead style="background-color: azure">
+            <tr>
+                <th>DeveloperId</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email Address</th>
+                <th>City</th>
+                <th>Country</th>
+                <th>Annual Salary ($)</th>
+                <th>Does Open Source</th>
+                <th>Experience In Years</th>
+                <th>Actions</th>
+            </tr>       
+        </thead>
+        <tbody>
+            <tr>
+                @if (developerInfo != null)
+                {
+                    <td>@developerInfo.DeveloperId</td>
+                    <td>@developerInfo.FirstName</td>
+                    <td>@developerInfo.LastName</td>
+                    <td>@developerInfo.EmailAddress</td>
+                    <td>@developerInfo.City</td>
+                    <td>@developerInfo.Country</td>
+                    <td>@developerInfo.AnnualSalary</td>
+                    @if (developerInfo.DoesOpenSource == true)
+                    {
+                        <td>Yes</td>
+                    }
+                    else
+                    {
+                        <td>No</td>
+                    }
+                    <td>@developerInfo.ExperienceInYears</td>
+                    <td>
+                        <span class="row">
+                            <a class="oi oi-pencil btn btn-secondary" style="cursor:pointer" @onclick="(() => EditDeveloper())"></a>&nbsp;
+                            <a class="oi oi-trash btn btn-danger" style="cursor:pointer" @onclick="(() => DeleteDeveloper())"></a>
+                        </span>
+                    </td>
+                }
+                else
+                {
+                    <td class="col-sm-6 row" style="font-weight:bold; font-style:oblique">No records found.</td>
+                }
+            </tr>
+        </tbody>
+    </table>       
+    </div>
+    <hr />
+    <div class="col-12 row">@DeveloperService.GetCreationDate()</div>
+    <div class="col-12 row">version: @DeveloperService.GetVersion()</div>
+
+    @code {
+        [Parameter]
+        public string developerId { get; set; }
+
+        DeveloperViewModel developerInfo = new DeveloperViewModel();
+
+        public List<Developer> developerItems { get; set; }
+
+        string baseUrl = @"http://localhost:100/";
+
+        protected override async Task OnParametersSetAsync()
+        {
+            //var baseUrl = @"http://localhost:65152/";
+            //var response = await http.GetStringAsync($"{baseUrl}api/Developer/{developerId}");
+            //developerInfo = Newtonsoft.Json.JsonConvert.DeserializeObject<Developer>(response);
+            await LoadDeveloper();
+        }
+
+        private async Task DeleteDeveloper()
+        {
+            var http = ClientFactory.CreateClient("dev");
+            var firstname = developerInfo.FirstName;
+            var lastname = developerInfo.LastName ;
+            var confirm = await JSRuntime.InvokeAsync<bool>("confirmDelete", firstname, lastname);
+            if (confirm)
+            {
+                await http.DeleteAsync($"api/Developer/GetSingleDeveloper/{developerId}");
+                await LoadDeveloper();
+                //await base.OnAfterRenderAsync(false);
+            }
+        }
+
+        private void EditDeveloper()
+        {
+            NavigationManager.NavigateTo($"/developers/edit/{developerId}");
+        }
+
+        private async Task LoadDeveloper()
+        {
+            var http = ClientFactory.CreateClient("dev");
+            Developer developer = await http.GetJsonAsync<Developer>($"api/Developer/GetSingleDeveloper/{developerId}");
+            developerInfo = developer;
+        }
+    }

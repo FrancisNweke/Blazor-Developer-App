@@ -1,0 +1,85 @@
+﻿@page "/country"
+@inject HttpClient http
+
+<h1>Countries in the world.</h1>
+<p>Find your country and city with this cascading dropdownlist using EF Core</p>
+<hr />
+@if (countryList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <label for="Country" class="control-label">Country</label>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Cities" class="control-label">Cities</label>
+        </div>
+    </div>
+
+    <div class="row" style="padding-top:10px">
+        <div class="col-md-4">
+            <select class="form-control" @onchange="@CountryClicked">
+                <option value="">-- Select Country --</option>
+                @foreach (var country in countryList)
+                {
+                    <option value="@country.Code">@country.Description</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <select class="form-control" @onchange="@CityClicked">
+                <option value="">-- Select City --</option>
+                @if (cityList != null)
+                {
+                    @foreach (var city in cityList)
+                    {
+                        <option value="@city.Description">@city.Description</option>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="row" style="padding-top:50px">
+        <div class="col-md-4">
+            <label class="control-label">Country Name: @countryName</label>
+        </div>        
+        <div class="col-md-4">
+            <label class="control-label">City Name: @cityName</label>
+        </div>
+    </div>
+}
+
+@code {
+    List<CountryViewModel> countryList = new List<CountryViewModel>();
+    List<Cities> cityList = new List<Cities>();
+    public string countryName { get; set; }
+    public string countryCode { get; set; }
+    public string cityName { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var baseUrl = @"http://localhost:65152/";
+        countryList = await http.GetJsonAsync<List<CountryViewModel>>($"{baseUrl}api/Country");
+    }
+
+    protected async void CountryClicked(ChangeEventArgs countryEvent)
+    {
+        var baseUrl = @"http://localhost:65152/";
+        cityList.Clear();
+        cityName = string.Empty;
+        countryCode = countryEvent.Value.ToString();
+        countryName = countryList.FirstOrDefault(s => s.Code == countryCode).Description;
+        cityList = await http.GetJsonAsync<List<Cities>>($"{baseUrl}api/Cities/GetAllCityByCountryCode/{countryCode}");
+        this.StateHasChanged();
+    }
+    void CityClicked(ChangeEventArgs cityEvent)
+    {
+        cityName = cityEvent.Value.ToString();
+        this.StateHasChanged();
+    }
+
+}

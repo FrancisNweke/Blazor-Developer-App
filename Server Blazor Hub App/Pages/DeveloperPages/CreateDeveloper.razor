@@ -1,0 +1,98 @@
+﻿@page "/developers/create/{developerId}"
+@inject IDeveloperService DeveloperService
+@inject IJSRuntime JSRuntime
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager NavigationManager
+@using Newtonsoft.Json 
+
+
+<div class="container col-12">
+    <h3><b>Enter Developer Information</b></h3>
+    <hr />
+
+    <ServerValidation IsVisible="IsVisible" Results="Results">
+        @RecordName
+    </ServerValidation>
+
+   <DeveloperForm Developer="@developer" OnValidSubmit="@(() => SaveDeveloper())" />
+</div>
+<hr />
+<div class="col-sm-10 row">@DeveloperService.GetCreationDate()</div>
+<div class="col-sm-10 row">version: @DeveloperService.GetVersion()</div>
+
+
+@code {
+    [Parameter]
+    public string DeveloperId { get; set; }
+
+    [Parameter]
+    public Developer developerDetail { get; set; }
+
+    ElementReference firstNameText;
+
+    public string[] Cities { get; set; }
+
+    public bool IsVisible { get; set; }
+
+    public bool Results { get; set; } = false;
+
+    public string RecordName { get; set; }
+
+    Developer developer = new Developer();
+
+    //private async Task SaveDeveloper()
+    //{
+    //    developer.DeveloperId = GenerateDeveloperId();
+    //    var json = JsonConvert.SerializeObject(developer);
+    //    var data = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+    //    await http.PostAsync("http://localhost:65152/api/developer", data);
+    //    IsVisible = true;
+    //    var firstname = developer.FirstName;
+    //    var lastname = developer.LastName;
+    //    RecordName = firstname + " " + lastname;
+    //    Results = true;
+
+    //    developer = new Developer();
+    //    NavigationManager.NavigateTo("/developers", forceLoad: true);
+
+    //    //await JSRuntime.InvokeVoidAsync("saveMessage", firstname, lastname);
+    //    await JSRuntime.InvokeVoidAsync("setFocusOnElement", firstNameText);
+    //}
+
+    private async Task SaveDeveloper()
+    {
+        //var baseUrl = @"http://localhost:100/";
+        var http = ClientFactory.CreateClient("dev");
+        developer.DeveloperId = GenerateDeveloperId();
+        var response = await http.PostAsJsonAsync<Developer>("api/Developer", developer);
+        IsVisible = true;
+        if (response.IsSuccessStatusCode)
+        {
+            var firstname = developer.FirstName;
+            var lastname = developer.LastName;
+            RecordName = firstname + " " + lastname;
+            Results = true;
+
+            developer = new Developer();
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
+
+        //await JSRuntime.InvokeVoidAsync("saveMessage", firstname, lastname);
+        await JSRuntime.InvokeVoidAsync("setFocusOnElement", firstNameText);
+       
+    }
+
+    private string GenerateDeveloperId()
+    {
+        string generatedId;
+        int randomNumber;
+        int[] randomNumbers = new int[4];
+        Random random = new Random();
+        for (int i = 0; i < 3; i++)
+        {
+            randomNumber = random.Next(0, 9);
+            randomNumbers[i] = randomNumber;
+        }
+        return generatedId = "Asix" + randomNumbers[0] + randomNumbers[1] + randomNumbers[2] + randomNumbers[3];
+    }
+}

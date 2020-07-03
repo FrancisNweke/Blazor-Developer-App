@@ -1,0 +1,39 @@
+﻿@inject IJSRuntime JSRuntime
+@inject HttpClient http
+
+
+<select class="form-control-sm col-sm-4" @onchange="@ChangeCity" id="city">
+    @if (cityList != null)
+    {
+        <option value="">-- Select City --</option>
+        @foreach (var city in cityList)
+        {
+            <option value="@city.Description">@city.Description</option>
+        }
+    }
+</select>
+ 
+
+@code {
+    [Parameter]
+    public string CurrentCity { get; set; }
+
+    public List<City> cityList = new List<City>();
+    public string cityName { get; set; }
+    //public string[] Cities { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        cityList = await http.GetJsonAsync<List<City>>("http://localhost:100/api/City");
+        //var baseUrl = @"http://localhost:65152/";
+        //var resp = await http.GetStringAsync($"{baseUrl}api/City");
+        //cityList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<City>>(resp);
+    }
+    public void ChangeCity(ChangeEventArgs e)
+    {
+        cityName = e.Value.ToString();
+        this.StateHasChanged();
+        //cityName = Cities.FirstOrDefault(s => s.Id.ToString() == cityId).Description;
+        //Developer.City = selectedCity;
+    }
+}
